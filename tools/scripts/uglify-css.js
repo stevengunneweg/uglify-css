@@ -1,7 +1,10 @@
 import { globSync } from 'glob';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const files = globSync('dist/**/*.css');
+const colorReset = '\x1b[0m';
+const colorFgBlue = '\x1b[34m';
+const colorFgGreen = '\x1b[32m';
+const colorFgRed = '\x1b[31m';
 
 class Extractor {
 	_files = [];
@@ -106,6 +109,7 @@ class Uglifier {
 	];
 
 	uglifyValue(value, prefix = '') {
+		// @TODO: check if value is already in extracted values
 		const mapKey = `${prefix}${value}`;
 		if (this._mapping[mapKey]) {
 			return this._mapping[mapKey];
@@ -187,6 +191,7 @@ class Replacer {
 	}
 }
 
+const files = globSync('dist/**/*.css');
 const extractor = new Extractor(files);
 const uglifier = new Uglifier();
 const replacer = new Replacer();
@@ -210,16 +215,32 @@ replaceables.forEach((className) => {
 });
 replacer.replaceFiles();
 
-const mappingSorted = Object.entries(uglifier._mapping).sort((a, b) => {
-	if (a[0] < b[0]) {
-		return -1;
-	} else if (a[0] > b[0]) {
-		return 1;
-	}
-	return 0;
-});
-console.log('mapping', JSON.stringify(mappingSorted, null, 2));
+const mappingSorted = Object.entries(uglifier._mapping)
+	.sort((a, b) => {
+		if (a[0] < b[0]) {
+			return -1;
+		} else if (a[0] > b[0]) {
+			return 1;
+		}
+		return 0;
+	})
+	.reduce((cummulative, [key, value]) => {
+		cummulative[key] = value;
+		return cummulative;
+	}, {});
+console.log('mapping', mappingSorted);
 console.log('----------------------------------');
 console.log('Uglified CSS classes and variables');
 console.log('See mapping above');
-console.log(replacer.fileSizes);
+
+Object.entries(replacer.fileSizes).forEach(([file, sizes]) => {
+	let color = '';
+	if (sizes.old > sizes.new) {
+		color = colorFgGreen;
+	} else if (sizes.old < sizes.new) {
+		color = colorFgRed;
+	}
+	console.log(
+		`${colorFgBlue}${file}${colorReset} - ${sizes.old} -> ${sizes.new} ${color}(${sizes.old === sizes.new ? '' : sizes.old > sizes.new ? '-' : '+'}${Math.abs(sizes.optimised)}%)${colorReset}`,
+	);
+});
