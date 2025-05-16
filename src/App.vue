@@ -2,11 +2,12 @@
 import HelloWorld from './components/HelloWorld.vue';
 import FooterComponent from './components/FooterComponent.vue';
 import HeaderComponent from './components/HeaderComponent.vue';
-import Card from './components/Card.vue';
+import CardComponent from './components/CardComponent.vue';
 </script>
 
 <template>
 	<HeaderComponent title="Uglify Tailwind CSS" />
+
 	<div class="flex justify-center gap-2">
 		<a href="https://vite.dev" target="_blank">
 			<img src="/vite.svg" class="logo" alt="Vite logo" />
@@ -17,9 +18,9 @@ import Card from './components/Card.vue';
 	</div>
 	<HelloWorld msg="Vite + Vue" />
 	<div class="flex flex-wrap justify-center gap-2">
-		<Card cardTitle="Card Title" />
-		<Card cardTitle="Card Title 2" />
-		<Card cardTitle="Card Title 3" />
+		<CardComponent cardTitle="Card Title" />
+		<CardComponent cardTitle="Card Title 2" />
+		<CardComponent cardTitle="Card Title 3" />
 	</div>
 
 	<FooterComponent msg="Footer" />
