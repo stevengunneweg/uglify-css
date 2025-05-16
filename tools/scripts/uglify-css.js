@@ -19,13 +19,13 @@ class Extractor {
 		this._files.forEach((file) => {
 			const fileContents = readFileSync(file, 'utf-8');
 			const contentsWithoutComments = fileContents.replaceAll(
-				/\/(\*)+([^\/])*(?=\*\/)/gm,
+				/\/(\*)+.*(?=\*\/)\*\/|\/\/.*$/gm,
 				'',
 			);
 
 			// Match only valid CSS class names
 			const matches = contentsWithoutComments.match(
-				/\.[a-zA-Z0-9-_:\\]*-[a-zA-Z0-9-_:\\]+(?=\{)/g,
+				/\.(?:[a-zA-Z0-9-_\\\/]|\\:)*-(?:[a-zA-Z0-9-_\\\/]|\\:)+(?=\s|\:|\{)/gm,
 			);
 			if (matches) {
 				// Remove the leading . for each class name
