@@ -28,15 +28,8 @@ class Extractor {
 				/\.(?:[a-zA-Z0-9-_\\\/]|\\:)*-(?:[a-zA-Z0-9-_\\\/]|\\:)+(?=\s|\:|\{)/gm,
 			);
 			if (matches) {
-				const cleanMatches = matches
-					// Remove the leading . for each class name
-					.map((match) => match.slice(1))
-					// @TODO: find better way to prevent css value replacement that is not a variable
-					// Prevent uglification of values that are also values in css
-					.filter(
-						(match) =>
-							!['inline-block', 'inline-flex'].includes(match),
-					);
+				// Remove the leading . for each class name
+				const cleanMatches = matches.map((match) => match.slice(1));
 				this.classNames.push(...cleanMatches);
 			}
 
@@ -144,12 +137,17 @@ class Replacer {
 	/* Replace value with uglified version */
 	parse(value, uglyValue) {
 		Object.entries(this.files).forEach(([file, contents]) => {
+			// Only replace classes and variables, not values
+			let prefix = '';
+			if (file.endsWith('.css') && !value.startsWith('--')) {
+				prefix = '.';
+			}
 			this.files[file] = contents
-				.replaceAll(value, uglyValue)
+				.replaceAll(`${prefix}${value}`, `${prefix}${uglyValue}`)
 				// Also replace non-escaped implementations
 				.replaceAll(
-					value.replaceAll('\\', ''),
-					uglyValue.replaceAll('\\', ''),
+					`${prefix}${value}`.replaceAll('\\', ''),
+					`${prefix}${uglyValue}`.replaceAll('\\', ''),
 				);
 		});
 	}
