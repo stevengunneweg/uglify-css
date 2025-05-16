@@ -3,6 +3,7 @@ import HelloWorld from './components/HelloWorld.vue';
 import FooterComponent from './components/FooterComponent.vue';
 import HeaderComponent from './components/HeaderComponent.vue';
 import CardComponent from './components/CardComponent.vue';
+import ButtonComponent from './components/ButtonComponent.vue';
 </script>
 
 <template>
@@ -23,6 +24,7 @@ import CardComponent from './components/CardComponent.vue';
 		<CardComponent cardTitle="Card Title 3" />
 	</div>
 
+	<ButtonComponent buttonText="Button" />
 	<FooterComponent msg="Footer" />
 </template>
 

@@ -1,0 +1,15 @@
+<script setup>
+defineProps({
+	buttonText: String,
+});
+</script>
+
+<template>
+	<div
+		class="my-4 inline-flex cursor-pointer items-center justify-center rounded-md bg-amber-600 p-4 text-white hover:bg-amber-300"
+	>
+		{{ buttonText }}
+	</div>
+</template>
+
+<style></style>
