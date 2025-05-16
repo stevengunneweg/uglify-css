@@ -196,6 +196,7 @@ const extractor = new Extractor(files);
 const uglifier = new Uglifier();
 const replacer = new Replacer();
 
+// @TODO: Detect most used and give it shortest replacement name
 const { classes, variables } = extractor.extract();
 const replaceables = [...classes, ...variables].sort((a, b) => {
 	if (a.length > b.length) {
