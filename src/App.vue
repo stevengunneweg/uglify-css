@@ -1,5 +1,5 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue';
+import Filler from './components/filler.vue';
 import FooterComponent from './components/FooterComponent.vue';
 import HeaderComponent from './components/HeaderComponent.vue';
 import CardComponent from './components/CardComponent.vue';
@@ -17,7 +17,7 @@ import ButtonComponent from './components/ButtonComponent.vue';
 			<img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
 		</a>
 	</div>
-	<HelloWorld msg="Vite + Vue" />
+	<Filler />
 	<div class="flex flex-wrap justify-center gap-2">
 		<CardComponent cardTitle="Card Title" />
 		<CardComponent cardTitle="Card Title 2" />
@@ -29,16 +29,4 @@ import ButtonComponent from './components/ButtonComponent.vue';
 </template>
 
 <style scoped>
-.logo {
-	height: 6em;
-	padding: 1.5em;
-	will-change: filter;
-	transition: filter 300ms;
-}
-.logo:hover {
-	filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-	filter: drop-shadow(0 0 2em #42b883aa);
-}
 </style>
