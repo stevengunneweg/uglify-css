@@ -117,6 +117,7 @@ class Uglifier {
 class Replacer {
 	filesPaths = [];
 	files = {};
+	fileSizes = {};
 
 	constructor() {
 		this.filesPaths = globSync('dist/**/*.{css,js,html}');
@@ -126,6 +127,9 @@ class Replacer {
 			const fileContents = readFileSync(file, 'utf-8');
 			if (!this.files[file]) {
 				this.files[file] = fileContents;
+			}
+			if (!this.fileSizes[file]) {
+				this.fileSizes[file] = { old: fileContents.length };
 			}
 		});
 	}
@@ -139,6 +143,10 @@ class Replacer {
 
 	/* Replace file with new value */
 	replaceFiles() {
+		Object.keys(this.files).forEach((file) => {
+			this.fileSizes[file].new = this.files[file].length;
+		});
+
 		Object.entries(this.files).forEach(([file, contents]) => {
 			writeFileSync(file, contents, 'utf-8');
 		});
@@ -172,3 +180,4 @@ console.log('mapping', uglifier._mapping);
 console.log('----------------------------------');
 console.log('Uglified CSS classes and variables');
 console.log('See mapping above');
+console.log(replacer.fileSizes);
