@@ -3,34 +3,49 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 const files = globSync('dist/**/*.css');
 
-const classNames = [];
-const cssVariables = [];
-files.forEach((file) => {
-	const fileContents = readFileSync(file, 'utf-8');
-	const contentsWithoutComments = fileContents.replace(/\/\*.*?\*\//gs, '');
+class Extractor {
+	_files = [];
+	classNames = [];
+	cssVariables = [];
 
-	// Match only valid CSS class names
-	const matches = contentsWithoutComments.match(
-		/\.[a-zA-Z0-9-_:\\]*-[a-zA-Z0-9-_:\\]+(?=\{)/g,
-	);
-	if (matches) {
-		// Remove the leading . for each class name
-		const cleanMatches = matches.map((match) => match.slice(1));
-		classNames.push(...cleanMatches);
+	constructor() {
+		this._files = files;
 	}
 
-	// Match only valid CSS variables
-	const variableMatches = contentsWithoutComments.match(
-		/\--[a-zA-Z0-9-]*(?=\:)/g,
-	);
-	if (variableMatches) {
-		cssVariables.push(...variableMatches);
-	}
-});
+	extract() {
+		this._files.forEach((file) => {
+			const fileContents = readFileSync(file, 'utf-8');
+			const contentsWithoutComments = fileContents.replaceAll(
+				/\/(\*)+([^\/])*(?=\*\/)/gm,
+				'',
+			);
 
-const sortedClassNames = classNames.sort();
-const uniqeClassNames = [...new Set(sortedClassNames)];
-const uniqeVariableNames = [...new Set(cssVariables)];
+			// Match only valid CSS class names
+			const matches = contentsWithoutComments.match(
+				/\.[a-zA-Z0-9-_:\\]*-[a-zA-Z0-9-_:\\]+(?=\{)/g,
+			);
+			if (matches) {
+				// Remove the leading . for each class name
+				const cleanMatches = matches.map((match) => match.slice(1));
+				this.classNames.push(...cleanMatches);
+			}
+
+			// Match only valid CSS variables
+			const variableMatches = contentsWithoutComments.match(
+				/\--[a-zA-Z0-9-]*(?=\:)/g,
+			);
+			if (variableMatches) {
+				this.cssVariables.push(...variableMatches);
+			}
+		});
+		const uniqeClassNames = [...new Set(this.classNames)];
+		const uniqeVariableNames = [...new Set(this.cssVariables)];
+		return {
+			classes: uniqeClassNames,
+			variables: uniqeVariableNames,
+		};
+	}
+}
 
 class Uglifier {
 	_mapping = {};
@@ -103,13 +118,18 @@ class Uglifier {
 				this._supportedChars[n % this._supportedChars.length] + result;
 			n = Math.floor(n / this._supportedChars.length) - 1;
 		} while (n >= 0);
-		const uglyValue = `${prefix}${result}`;
-
+		let uglyValue = `${prefix}${result}`;
+		// Prevent duplicate ugly values
 		if (this._uglies.includes(uglyValue)) {
-			return `${uglyValue}-${Math.floor(Math.random() * 1000)}`;
+			uglyValue = `${uglyValue}-${Math.floor(Math.random() * 1000)}`;
+		}
+		// If ugly value does not provide improvement, use the original value
+		if (uglyValue.length > mapKey.length) {
+			uglyValue = mapKey;
 		}
 		this._uglies.push(uglyValue);
 		this._mapping[mapKey] = uglyValue;
+
 		return uglyValue;
 	}
 }
@@ -137,7 +157,13 @@ class Replacer {
 	/* Replace value with uglified version */
 	parse(value, uglyValue) {
 		Object.entries(this.files).forEach(([file, contents]) => {
-			this.files[file] = contents.replaceAll(value, uglyValue);
+			this.files[file] = contents
+				.replaceAll(value, uglyValue)
+				// Also replace non-escaped implementations
+				.replaceAll(
+					value.replaceAll('\\', ''),
+					uglyValue.replaceAll('\\', ''),
+				);
 		});
 	}
 
@@ -145,6 +171,14 @@ class Replacer {
 	replaceFiles() {
 		Object.keys(this.files).forEach((file) => {
 			this.fileSizes[file].new = this.files[file].length;
+			const optimisePercentage =
+				Math.round(
+					(100 -
+						(100 / this.fileSizes[file].old) *
+							this.fileSizes[file].new) *
+						100,
+				) / 100;
+			this.fileSizes[file].optimised = optimisePercentage;
 		});
 
 		Object.entries(this.files).forEach(([file, contents]) => {
@@ -153,19 +187,19 @@ class Replacer {
 	}
 }
 
+const extractor = new Extractor(files);
 const uglifier = new Uglifier();
 const replacer = new Replacer();
 
-const replaceables = [...uniqeClassNames, ...uniqeVariableNames].sort(
-	(a, b) => {
-		if (a.length > b.length) {
-			return -1;
-		} else if (a.length < b.length) {
-			return 1;
-		}
-		return 0;
-	},
-);
+const { classes, variables } = extractor.extract();
+const replaceables = [...classes, ...variables].sort((a, b) => {
+	if (a.length > b.length) {
+		return -1;
+	} else if (a.length < b.length) {
+		return 1;
+	}
+	return 0;
+});
 
 replaceables.forEach((className) => {
 	const uglyValue = uglifier.uglifyValue(
@@ -176,7 +210,15 @@ replaceables.forEach((className) => {
 });
 replacer.replaceFiles();
 
-console.log('mapping', uglifier._mapping);
+const mappingSorted = Object.entries(uglifier._mapping).sort((a, b) => {
+	if (a[0] < b[0]) {
+		return -1;
+	} else if (a[0] > b[0]) {
+		return 1;
+	}
+	return 0;
+});
+console.log('mapping', JSON.stringify(mappingSorted, null, 2));
 console.log('----------------------------------');
 console.log('Uglified CSS classes and variables');
 console.log('See mapping above');
