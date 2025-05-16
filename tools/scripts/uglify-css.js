@@ -1,7 +1,7 @@
 import { globSync } from 'glob';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
-const files = globSync('dist/**/*.css', {});
+const files = globSync('dist/**/*.css');
 console.log(files);
 
 files.forEach((file) => {
@@ -90,36 +90,62 @@ class Uglifier {
 	}
 }
 
+class Replacer {
+	files = globSync('dist/**/*.{css,js,html}');
+
+	replace(value, uglyValue) {
+		console.log('replace', value, uglyValue);
+
+		this.files.forEach((file) => {
+			const fileContents = readFileSync(file, 'utf-8');
+			const newFileContents = fileContents.replace(
+				new RegExp(value, 'g'),
+				uglyValue,
+			);
+			writeFileSync(file, newFileContents, 'utf-8');
+		});
+	}
+}
+
 const uglifier = new Uglifier();
-console.log('uglify-css', uglifier.uglifyValue('bg-red-100'));
-console.log('uglify-css', uglifier.uglifyValue('bg-red-500'));
-console.log('uglify-css', uglifier.uglifyValue('bg-red-500'));
-console.log('uglify-css', uglifier.uglifyValue('bg+red+500'));
-console.log('uglify-css', uglifier.uglifyValue('bg+red-500'));
-console.log('uglify-css', uglifier.uglifyValue('bg-red-500'));
-console.log('uglify-css', uglifier.uglifyValue('bg-red-600'));
-console.log('uglify-css', uglifier.uglifyValue('bg-red-700'));
-console.log('uglify-css', uglifier.uglifyValue('bg-red-800'));
-console.log('uglify-css', uglifier.uglifyValue('bg-red-900'));
-console.log('uglify-css', uglifier.uglifyValue('bg-red'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue-100'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue-200'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue-300'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue-400'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue-500'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue-600'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue-700'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue-800'));
-console.log('uglify-css', uglifier.uglifyValue('bg-blue-900'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green-100'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green-200'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green-300'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green-400'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green-500'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green-600'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green-700'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green-800'));
-console.log('uglify-css', uglifier.uglifyValue('bg-green-900'));
-console.log('mapping', uglifier._mapping);
+// console.log('uglify-css', uglifier.uglifyValue('bg-red-100'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-red-500'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-red-500'));
+// console.log('uglify-css', uglifier.uglifyValue('bg+red+500'));
+// console.log('uglify-css', uglifier.uglifyValue('bg+red-500'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-red-500'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-red-600'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-red-700'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-red-800'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-red-900'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-red'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue-100'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue-200'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue-300'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue-400'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue-500'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue-600'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue-700'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue-800'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-blue-900'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green-100'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green-200'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green-300'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green-400'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green-500'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green-600'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green-700'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green-800'));
+// console.log('uglify-css', uglifier.uglifyValue('bg-green-900'));
+// console.log('mapping', uglifier._mapping);
+
+const replacer = new Replacer();
+console.log('replacer', replacer.files);
+const classes = ['bg-primary', '--color-primary', '--color-red-700'];
+classes.forEach((className) => {
+	const hasDashes = className.startsWith('--');
+	const uglyValue = uglifier.uglifyValue(className.replace(/^--/g, ''));
+	replacer.replace(className, `${hasDashes ? '--' : ''}${uglyValue}`);
+});
