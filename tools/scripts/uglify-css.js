@@ -183,6 +183,7 @@ let mapping = {};
 [variables, classes].forEach((list) => {
 	const uglifier = new Uglifier(list);
 	// @TODO: Detect most used and give it shortest replacement name
+	// In order to do this, we need to count the number of times a class is used throughout the dist folder
 	const replaceables = [...list].sort((a, b) => {
 		if (a.length > b.length) {
 			return -1;
