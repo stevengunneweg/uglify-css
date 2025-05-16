@@ -4,10 +4,21 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const files = globSync('dist/**/*.css');
 console.log(files);
 
+const classNames = [];
 files.forEach((file) => {
 	const fileContents = readFileSync(file, 'utf-8');
-	console.log(fileContents);
+    const contentsWithoutComments = fileContents.replace(/\/\*.*?\*\//gs, '');
+
+	// Match only valid CSS class names
+	const matches = contentsWithoutComments.match(/\.[a-zA-Z0-9-_:\\]*-[a-zA-Z0-9-_:\\]+(?=\{)/g);
+
+    if (matches) {
+        classNames.push(...matches);
+    }
 });
+
+const sortedClassNames = classNames.sort();
+const uniqeClassNames = [...new Set(sortedClassNames)];
 
 class Uglifier {
 	_mapping = {};
