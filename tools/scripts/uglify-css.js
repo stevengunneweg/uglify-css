@@ -9,23 +9,27 @@ files.forEach((file) => {
 	console.log(fileContents);
 });
 
-const mapping = {};
-const uglies = [];
-function uglifyValue(value) {
-	if (mapping[value]) {
-		return mapping[value];
-	}
+class Uglifier {
+	_mapping = {};
+	_uglies = [];
 
-	const uglyValue = value.replace(/[-+]/g, '_');
-	if (uglies.includes(uglyValue)) {
-		return uglyValue + Math.floor(Math.random() * 1000);
+	uglifyValue(value) {
+		if (this._mapping[value]) {
+			return this._mapping[value];
+		}
+
+		const uglyValue = value.replace(/[-+]/g, '_');
+		if (this._uglies.includes(uglyValue)) {
+			return uglyValue + Math.floor(Math.random() * 1000);
+		}
+		this._uglies.push(uglyValue);
+		this._mapping[value] = uglyValue;
+		return uglyValue;
 	}
-	uglies.push(uglyValue);
-	mapping[value] = uglyValue;
-	return uglyValue;
 }
 
-console.log('uglify-css', uglifyValue('bg-red-100'));
-console.log('uglify-css', uglifyValue('bg-red-500'));
-console.log('uglify-css', uglifyValue('bg-red-500'));
-console.log('uglify-css', uglifyValue('bg+red+500'));
+const uglifier = new Uglifier();
+console.log('uglify-css', uglifier.uglifyValue('bg-red-100'));
+console.log('uglify-css', uglifier.uglifyValue('bg-red-500'));
+console.log('uglify-css', uglifier.uglifyValue('bg-red-500'));
+console.log('uglify-css', uglifier.uglifyValue('bg+red+500'));
