@@ -57,7 +57,7 @@ const participants = [
 </script>
 
 <template>
-	<section class="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+	<section class="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 mt-0">
 		<div class="max-w-4xl mx-auto px-4 py-8">
 			<div class="flex flex-col items-center gap-6">
 				<div class="relative group saturate-0 hover:saturate-100 transition-all duration-1000 ease-in-out">
@@ -88,13 +88,13 @@ const participants = [
 
 			<section class="mt-12">
 				<div class="bg-gray-800 rounded-2xl overflow-hidden shadow-xl">
-					<div class="p-6">
+					<div class="p-4 lg:p-6">
 						<h3 class="text-2xl font-bold text-white mb-8">Participants</h3>
 
 						<div class="space-y-8">
 							<div v-for="(row, index) in participants" :key="index">
 								<h4 class="text-xl font-semibold text-gray-300 mb-4">{{ row.title }}</h4>
-								<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+								<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-4">
 									<a
 										v-for="person in row.people"
 										:key="person.name"
