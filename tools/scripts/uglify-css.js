@@ -28,8 +28,15 @@ class Extractor {
 				/\.(?:[a-zA-Z0-9-_\\\/]|\\:)*-(?:[a-zA-Z0-9-_\\\/]|\\:)+(?=\s|\:|\{)/gm,
 			);
 			if (matches) {
-				// Remove the leading . for each class name
-				const cleanMatches = matches.map((match) => match.slice(1));
+				const cleanMatches = matches
+					// Remove the leading . for each class name
+					.map((match) => match.slice(1))
+					// @TODO: find better way to prevent css value replacement that is not a variable
+					// Prevent uglification of values that are also values in css
+					.filter(
+						(match) =>
+							!['inline-block', 'inline-flex'].includes(match),
+					);
 				this.classNames.push(...cleanMatches);
 			}
 
@@ -51,78 +58,54 @@ class Extractor {
 }
 
 class Uglifier {
+	_blacklist = [];
 	_mapping = {};
 	_uglies = [];
 	_supportedChars = [
-		'a',
-		'b',
-		'c',
-		'd',
-		'e',
-		'f',
-		'g',
-		'h',
-		'i',
-		'j',
-		'k',
-		'l',
-		'm',
-		'n',
-		'o',
-		'p',
-		'q',
-		'r',
-		's',
-		't',
-		'u',
-		'v',
-		'w',
-		'x',
-		'y',
-		'z',
-		'A',
-		'B',
-		'C',
-		'D',
-		'E',
-		'F',
-		'G',
-		'H',
-		'I',
-		'J',
-		'K',
-		'L',
-		'M',
-		'N',
-		'O',
-		'P',
-		'Q',
-		'R',
-		'S',
-		'T',
-		'U',
-		'V',
-		'W',
-		'X',
-		'Y',
-		'Z',
+		...'abcdefghijklmnopqrstuvwxyz',
+		...'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
 	];
+	_additionalChars = [...'0123456789'];
+
+	constructor(blacklist = []) {
+		this._blacklist = blacklist;
+	}
 
 	uglifyValue(value, prefix = '') {
-		// @TODO: check if value is already in extracted values
 		const mapKey = `${prefix}${value}`;
 		if (this._mapping[mapKey]) {
 			return this._mapping[mapKey];
 		}
 
+		const defaultCharset = this._supportedChars;
+		const extendedCharset = [
+			...this._supportedChars,
+			...this._additionalChars,
+		];
+
 		let n = this._uglies.length;
 		let result = '';
-		do {
-			result =
-				this._supportedChars[n % this._supportedChars.length] + result;
-			n = Math.floor(n / this._supportedChars.length) - 1;
-		} while (n >= 0);
+		result = defaultCharset[n % defaultCharset.length];
+		n = Math.floor((n - defaultCharset.length) / defaultCharset.length);
+
+		while (
+			n > 0 ||
+			(result.length <= 1 && this._uglies.length >= defaultCharset.length)
+		) {
+			result += extendedCharset[n % extendedCharset.length];
+			n = Math.floor(n / extendedCharset.length);
+		}
 		let uglyValue = `${prefix}${result}`;
+
+		// Check if value is already present in extracted values
+		if (this._blacklist.includes(uglyValue)) {
+			console.log(
+				`Value ${uglyValue} is blacklisted, skipping uglification.`,
+			);
+			this._uglies.push(uglyValue);
+			return this.uglifyValue(value, prefix);
+		}
+
 		// Prevent duplicate ugly values
 		if (this._uglies.includes(uglyValue)) {
 			uglyValue = `${uglyValue}-${Math.floor(Math.random() * 1000)}`;
@@ -193,30 +176,35 @@ class Replacer {
 
 const files = globSync('dist/**/*.css');
 const extractor = new Extractor(files);
-const uglifier = new Uglifier();
+const { classes, variables } = extractor.extract();
 const replacer = new Replacer();
 
-// @TODO: Detect most used and give it shortest replacement name
-const { classes, variables } = extractor.extract();
-const replaceables = [...classes, ...variables].sort((a, b) => {
-	if (a.length > b.length) {
-		return -1;
-	} else if (a.length < b.length) {
-		return 1;
-	}
-	return 0;
-});
-
-replaceables.forEach((className) => {
-	const uglyValue = uglifier.uglifyValue(
-		`${className}`.replace(/^--/g, ''),
-		className.startsWith('--') ? '--' : '',
-	);
-	replacer.parse(className, uglyValue);
+let mapping = {};
+// Give each type its own uglifier to reuse shortest values
+// @NOTE: Variables need to be handled first
+[variables, classes].forEach((list) => {
+	const uglifier = new Uglifier(list);
+	// @TODO: Detect most used and give it shortest replacement name
+	const replaceables = [...list].sort((a, b) => {
+		if (a.length > b.length) {
+			return -1;
+		} else if (a.length < b.length) {
+			return 1;
+		}
+		return 0;
+	});
+	replaceables.forEach((className) => {
+		const uglyValue = uglifier.uglifyValue(
+			`${className}`.replace(/^--/g, ''),
+			className.startsWith('--') ? '--' : '',
+		);
+		replacer.parse(className, uglyValue);
+	});
+	mapping = { ...mapping, ...uglifier._mapping };
 });
 replacer.replaceFiles();
 
-const mappingSorted = Object.entries(uglifier._mapping)
+const mappingSorted = Object.entries(mapping)
 	.sort((a, b) => {
 		if (a[0] < b[0]) {
 			return -1;
@@ -233,7 +221,6 @@ console.log('mapping', mappingSorted);
 console.log('----------------------------------');
 console.log('Uglified CSS classes and variables');
 console.log('See mapping above');
-
 Object.entries(replacer.fileSizes).forEach(([file, sizes]) => {
 	let color = '';
 	if (sizes.old > sizes.new) {
