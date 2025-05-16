@@ -2,25 +2,35 @@ import { globSync } from 'glob';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const files = globSync('dist/**/*.css');
-console.log(files);
 
 const classNames = [];
+const cssVariables = [];
 files.forEach((file) => {
 	const fileContents = readFileSync(file, 'utf-8');
-    const contentsWithoutComments = fileContents.replace(/\/\*.*?\*\//gs, '');
+	const contentsWithoutComments = fileContents.replace(/\/\*.*?\*\//gs, '');
 
 	// Match only valid CSS class names
-	const matches = contentsWithoutComments.match(/\.[a-zA-Z0-9-_:\\]*-[a-zA-Z0-9-_:\\]+(?=\{)/g);
-
-    if (matches) {
+	const matches = contentsWithoutComments.match(
+		/\.[a-zA-Z0-9-_:\\]*-[a-zA-Z0-9-_:\\]+(?=\{)/g,
+	);
+	if (matches) {
 		// Remove the leading . for each class name
-        const cleanMatches = matches.map(match => match.slice(1));
-        classNames.push(...cleanMatches);
-    }
+		const cleanMatches = matches.map((match) => match.slice(1));
+		classNames.push(...cleanMatches);
+	}
+
+	// Match only valid CSS variables
+	const variableMatches = contentsWithoutComments.match(
+		/\--[a-zA-Z0-9-]*(?=\:)/g,
+	);
+	if (variableMatches) {
+		cssVariables.push(...variableMatches);
+	}
 });
 
 const sortedClassNames = classNames.sort();
 const uniqeClassNames = [...new Set(sortedClassNames)];
+const uniqeVariableNames = [...new Set(cssVariables)];
 
 class Uglifier {
 	_mapping = {};
@@ -80,9 +90,10 @@ class Uglifier {
 		'Z',
 	];
 
-	uglifyValue(value) {
-		if (this._mapping[value]) {
-			return this._mapping[value];
+	uglifyValue(value, prefix = '') {
+		const mapKey = `${prefix}${value}`;
+		if (this._mapping[mapKey]) {
+			return this._mapping[mapKey];
 		}
 
 		let n = this._uglies.length;
@@ -92,13 +103,13 @@ class Uglifier {
 				this._supportedChars[n % this._supportedChars.length] + result;
 			n = Math.floor(n / this._supportedChars.length) - 1;
 		} while (n >= 0);
-		const uglyValue = `${result}`;
+		const uglyValue = `${prefix}${result}`;
 
 		if (this._uglies.includes(uglyValue)) {
-			return `${uglyValue} - ${Math.floor(Math.random() * 1000)}`;
+			return `${uglyValue}-${Math.floor(Math.random() * 1000)}`;
 		}
 		this._uglies.push(uglyValue);
-		this._mapping[value] = uglyValue;
+		this._mapping[mapKey] = uglyValue;
 		return uglyValue;
 	}
 }
@@ -137,20 +148,27 @@ class Replacer {
 const uglifier = new Uglifier();
 const replacer = new Replacer();
 
-uniqeClassNames.sort((a, b) => {
-	if (a.length > b.length) {
-		return -1;
-	} else if (a.length < b.length) {
-		return 1;
-	}
-	return 0;
-});
+const replaceables = [...uniqeClassNames, ...uniqeVariableNames].sort(
+	(a, b) => {
+		if (a.length > b.length) {
+			return -1;
+		} else if (a.length < b.length) {
+			return 1;
+		}
+		return 0;
+	},
+);
 
-uniqeClassNames.forEach((className) => {
-	const hasDashes = className.startsWith('--');
-	const uglyValue = uglifier.uglifyValue(className.replace(/^--/g, ''));
-	replacer.parse(className, `${hasDashes ? '--' : ''}${uglyValue}`);
+replaceables.forEach((className) => {
+	const uglyValue = uglifier.uglifyValue(
+		`${className}`.replace(/^--/g, ''),
+		className.startsWith('--') ? '--' : '',
+	);
+	replacer.parse(className, uglyValue);
 });
 replacer.replaceFiles();
 
 console.log('mapping', uglifier._mapping);
+console.log('----------------------------------');
+console.log('Uglified CSS classes and variables');
+console.log('See mapping above');
