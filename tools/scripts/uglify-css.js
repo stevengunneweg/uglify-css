@@ -6,6 +6,18 @@ const colorFgBlue = '\x1b[34m';
 const colorFgGreen = '\x1b[32m';
 const colorFgRed = '\x1b[31m';
 
+if (process.argv.includes('-h') || process.argv.includes('--help')) {
+	console.log(
+		`Usage: node tools/scripts/uglify-css.js [--help | -h] [--dry-run | -d]
+  -h, --help:		Show this help message and exit.
+  -d, --dry-run:	Only show the changes that would be made, without actually modifying the files.
+`,
+	);
+	process.exit(0);
+}
+const dryRun =
+	process.argv.includes('--d') || process.argv.includes('--dry-run');
+
 class Extractor {
 	_files = [];
 	classNames = [];
@@ -153,7 +165,7 @@ class Replacer {
 	}
 
 	/* Replace file with new value */
-	replaceFiles() {
+	replaceFiles(dryRun = false) {
 		Object.keys(this.files).forEach((file) => {
 			this.fileSizes[file].new = this.files[file].length;
 			const optimisePercentage =
@@ -166,9 +178,11 @@ class Replacer {
 			this.fileSizes[file].optimised = optimisePercentage;
 		});
 
-		Object.entries(this.files).forEach(([file, contents]) => {
-			writeFileSync(file, contents, 'utf-8');
-		});
+		if (!dryRun) {
+			Object.entries(this.files).forEach(([file, contents]) => {
+				writeFileSync(file, contents, 'utf-8');
+			});
+		}
 	}
 }
 
@@ -201,7 +215,7 @@ let mapping = {};
 	});
 	mapping = { ...mapping, ...uglifier._mapping };
 });
-replacer.replaceFiles();
+replacer.replaceFiles(dryRun);
 
 const mappingSorted = Object.entries(mapping)
 	.sort((a, b) => {
