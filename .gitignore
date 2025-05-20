@@ -8,8 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-# @TODO: remove this when uglification is properly implemented
-# dist
+dist
 dist-ssr
 *.local
 

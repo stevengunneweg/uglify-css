@@ -193,7 +193,7 @@ const { classes, variables } = extractor.extract();
 const replacer = new Replacer();
 
 let mapping = {};
-// Give each type its own uglifier to reuse shortest values
+// Give each type (class/variable) its own uglifier to reuse shortest values
 // @NOTE: Variables need to be handled first
 [variables, classes].forEach((list) => {
 	const uglifier = new Uglifier(list);
@@ -231,10 +231,17 @@ const mappingSorted = Object.entries(mapping)
 		cummulative[key] = value;
 		return cummulative;
 	}, {});
-console.log('mapping', mappingSorted);
-console.log('----------------------------------');
+
+if (dryRun) {
+	console.log('mapping', mappingSorted);
+} else {
+	writeFileSync(
+		`dist/uglify-css.map.json`,
+		JSON.stringify(mappingSorted, null, '\t'),
+		'utf8',
+	);
+}
 console.log('Uglified CSS classes and variables');
-console.log('See mapping above');
 Object.entries(replacer.fileSizes).forEach(([file, sizes]) => {
 	let color = '';
 	if (sizes.old > sizes.new) {
