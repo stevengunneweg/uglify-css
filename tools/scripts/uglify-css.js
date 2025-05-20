@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { globSync } from 'glob';
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -16,7 +17,7 @@ if (process.argv.includes('-h') || process.argv.includes('--help')) {
 	process.exit(0);
 }
 const dryRun =
-	process.argv.includes('--d') || process.argv.includes('--dry-run');
+	process.argv.includes('-d') || process.argv.includes('--dry-run');
 
 class Extractor {
 	_files = [];
@@ -245,3 +246,6 @@ Object.entries(replacer.fileSizes).forEach(([file, sizes]) => {
 		`${colorFgBlue}${file}${colorReset} - ${sizes.old} -> ${sizes.new} ${color}(${sizes.old === sizes.new ? '' : sizes.old > sizes.new ? '-' : '+'}${Math.abs(sizes.optimised)}%)${colorReset}`,
 	);
 });
+if (dryRun) {
+	console.log(`Changes have not been applied due to the --dry-run flag.`);
+}

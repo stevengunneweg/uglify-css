@@ -2,6 +2,7 @@
 	"name": "uglify-css",
 	"private": true,
 	"version": "0.0.0",
+	"bin": "tools/scripts/uglify-css.js",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
