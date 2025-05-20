@@ -71,6 +71,8 @@ dist/assets/index-DOXljpdd.css - 17669 -> 12885 (-27.08%)
 dist/assets/index-BlAT0E4W.js - 66403 -> 65364 (-1.56%)
 ```
 
+You can run these tests yourself by running `npm run test:angular` or `npm run test:vue` from the root of this repository.
+
 ## Future Improvements
 
 ### Sourcemaps
