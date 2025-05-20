@@ -9,7 +9,7 @@ const colorFgRed = '\x1b[31m';
 
 if (process.argv.includes('-h') || process.argv.includes('--help')) {
 	console.log(
-		`Usage: node tools/scripts/uglify-css.js [--help | -h] [--dry-run | -d]
+		`Usage: npx uglify-css [--help | -h] [--dry-run | -d]
   -h, --help:		Show this help message and exit.
   -d, --dry-run:	Only show the changes that would be made, without actually modifying the files.
 `,
