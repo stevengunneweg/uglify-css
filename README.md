@@ -17,7 +17,7 @@ Uglify-CSS scans all CSS files in the target folder and lists all classes and va
 ### Command line usage
 
 ```
-npx uglify-css [--help | -h] [--dry-run | -d]
+npx uglify-css [--help | -h] [--dry-run | -d] [--path | -p]
 ```
 
 ### Example

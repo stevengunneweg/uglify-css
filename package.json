@@ -1,17 +1,33 @@
 {
 	"name": "uglify-css",
+	"description": "A tool to uglify CSS files by renaming variables and classes",
+	"author": "Steven Gunneweg",
 	"version": "0.0.1",
-	"bin": "bin/uglify-css.js",
+	"keywords": [
+		"CSS",
+		"uglify",
+		"minify"
+	],
+	"homepage": "https://github.com/stevengunneweg/uglify-css",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:stevengunneweg/uglify-css.git"
+	},
+	"license": "MIT",
+	"bin": {
+		"uglify-css": "bin/uglify-css.js"
+	},
 	"type": "module",
 	"scripts": {
-		"test:angular": "npm --prefix tests/angular run build && npm --prefix tests/angular run uglify -- -d",
-		"test:vue": "npm --prefix tests/vue run build && npm --prefix tests/vue run uglify -- -d"
+		"test:angular": "cd tests/angular && npm run build && npm run uglify -- -d",
+		"test:vue": "cd tests/vue && npm run build && npm run uglify -- -d"
 	},
 	"dependencies": {
-		"glob": "11.0.2"
+		"glob": "13.0.0",
+		"yargs": "18.0.0"
 	},
 	"devDependencies": {
-		"prettier": "3.5.3",
-		"prettier-plugin-tailwindcss": "0.6.11"
+		"prettier": "3.7.3",
+		"prettier-plugin-tailwindcss": "0.7.1"
 	}
 }

@@ -1,23 +1,33 @@
 #!/usr/bin/env node
 import { globSync } from 'glob';
 import { readFileSync, writeFileSync } from 'node:fs';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
 const colorReset = '\x1b[0m';
 const colorFgBlue = '\x1b[34m';
 const colorFgGreen = '\x1b[32m';
 const colorFgRed = '\x1b[31m';
 
-if (process.argv.includes('-h') || process.argv.includes('--help')) {
-	console.log(
-		`Usage: npx uglify-css [--help | -h] [--dry-run | -d]
-  -h, --help:		Show this help message and exit.
-  -d, --dry-run:	Only show the changes that would be made, without actually modifying the files.
-`,
-	);
-	process.exit(0);
-}
-const dryRun =
-	process.argv.includes('-d') || process.argv.includes('--dry-run');
+const params = yargs(hideBin(process.argv))
+	.scriptName('uglify-css')
+	.usage('Usage: $0 [options]')
+	.option('dry-run', {
+		alias: 'd',
+		type: 'boolean',
+		default: false,
+		describe: 'Enable dry run mode',
+	})
+	.option('path', {
+		alias: 'p',
+		type: 'string',
+		default: 'dist',
+		describe: 'Path to the directory to process',
+	})
+	.help()
+	.alias('help', 'h').argv;
+const dryRun = params.dryRun;
+const path = params.path;
 
 class Extractor {
 	_files = [];
@@ -133,7 +143,7 @@ class Replacer {
 	fileSizes = {};
 
 	constructor() {
-		this.filesPaths = globSync('dist/**/*.{css,js,html}');
+		this.filesPaths = globSync(`${path}/**/*.{css,js,html}`);
 		this.files = {};
 
 		this.filesPaths.forEach((file) => {
@@ -187,7 +197,7 @@ class Replacer {
 	}
 }
 
-const files = globSync('dist/**/*.css');
+const files = globSync(`${path}/**/*.css`);
 const extractor = new Extractor(files);
 const { classes, variables } = extractor.extract();
 const replacer = new Replacer();
@@ -198,7 +208,7 @@ let mapping = {};
 [variables, classes].forEach((list) => {
 	const uglifier = new Uglifier(list);
 	// @TODO: Detect most used and give it shortest replacement name
-	// In order to do this, we need to count the number of times a class is used throughout the dist folder
+	// In order to do this, we need to count the number of times a class is used throughout the path folder
 	const replaceables = [...list].sort((a, b) => {
 		if (a.length > b.length) {
 			return -1;
@@ -236,7 +246,7 @@ if (dryRun) {
 	console.log('mapping', mappingSorted);
 } else {
 	writeFileSync(
-		`dist/uglify-css.map.json`,
+		`${path}/uglify-css.map.json`,
 		JSON.stringify(mappingSorted, null, '\t'),
 		'utf8',
 	);
