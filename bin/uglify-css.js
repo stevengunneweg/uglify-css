@@ -41,10 +41,19 @@ class Extractor {
 	extract() {
 		this._files.forEach((file) => {
 			const fileContents = readFileSync(file, 'utf-8');
-			const contentsWithoutComments = fileContents.replaceAll(
+			let contentsWithoutComments = fileContents.replaceAll(
 				/\/(\*)+.*(?=\*\/)\*\/|\/\/.*$/gm,
 				'',
 			);
+
+			if (file.endsWith('.html')) {
+				// Only match inline styles
+				contentsWithoutComments = [
+					...contentsWithoutComments.matchAll(
+						/<style[^>]*>([\s\S]*?)<\/style>/gim,
+					),
+				].toString();
+			}
 
 			// Match only valid CSS class names
 			const matches = contentsWithoutComments.match(
@@ -197,7 +206,7 @@ class Replacer {
 	}
 }
 
-const files = globSync(`${path}/**/*.css`);
+const files = globSync(`${path}/**/*.{css,html}`);
 const extractor = new Extractor(files);
 const { classes, variables } = extractor.extract();
 const replacer = new Replacer();
