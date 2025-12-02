@@ -19,7 +19,11 @@
 	},
 	"type": "module",
 	"scripts": {
+		"run:angular": "cd tests/angular && npm run start",
 		"test:angular": "cd tests/angular && npm run build && npm run uglify -- -d",
+		"run:html": "cd tests/html && npm run start",
+		"test:html": "cd tests/html && npm run build && npm run uglify -- -d",
+		"run:vue": "cd tests/vue && npm run start",
 		"test:vue": "cd tests/vue && npm run build && npm run uglify -- -d"
 	},
 	"dependencies": {

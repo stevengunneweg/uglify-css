@@ -1,0 +1,10 @@
+{
+	"name": "html",
+	"version": "0.0.0",
+	"scripts": {
+		"start": "open ./src/index.html",
+		"build": "scp -r src/ dist/",
+		"uglify": "node ../../bin/uglify-css.js"
+	},
+	"private": true
+}

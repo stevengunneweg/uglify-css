@@ -4,6 +4,7 @@ import { CardComponent } from './components/card/card.component';
 import { FillerComponent } from './components/filler/filler.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
+import { TestsComponent } from './components/tests/tests.component';
 
 @Component({
 	selector: 'app-root',
@@ -14,6 +15,7 @@ import { HeaderComponent } from './components/header/header.component';
 		FillerComponent,
 		FooterComponent,
 		HeaderComponent,
+		TestsComponent,
 	],
 })
 export class AppComponent {
