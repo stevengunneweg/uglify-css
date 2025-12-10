@@ -18,6 +18,12 @@ const params = yargs(hideBin(process.argv))
 		default: false,
 		describe: 'Enable dry run mode',
 	})
+	.option('verbose', {
+		alias: 'v',
+		type: 'boolean',
+		default: false,
+		describe: 'Enable verbose output',
+	})
 	.option('path', {
 		alias: 'p',
 		type: 'string',
@@ -33,6 +39,7 @@ const params = yargs(hideBin(process.argv))
 	.help()
 	.alias('help', 'h').argv;
 const dryRun = params.dryRun;
+const verbose = params.verbose;
 const path = params.path;
 const sortingAlgorithm = params.algorithm || 'length';
 let canUseUppercase = true;
@@ -49,9 +56,6 @@ class Extractor {
 	extract() {
 		this._files.forEach((file) => {
 			const fileContents = readFileSync(file, 'utf-8');
-			if (!fileContents.match(/<!doctype[^>]*html[^>]*>/i)) {
-				canUseUppercase = false;
-			}
 			let contentsWithoutComments = fileContents.replaceAll(
 				/\/(\*)+.*(?=\*\/)\*\/|\/\/.*$/gm,
 				'',
@@ -64,6 +68,10 @@ class Extractor {
 						/<style[^>]*>([\s\S]*?)<\/style>/gim,
 					),
 				].toString();
+
+				if (!fileContents.match(/<!doctype[^>]*html[^>]*>/i)) {
+					canUseUppercase = false;
+				}
 			}
 
 			// Match only valid CSS class names
@@ -192,20 +200,20 @@ class Replacer {
 						regexPrefix = '(?<=[.])';
 						break;
 					case 'html':
-						regexPrefix = '(?<=[^:][ ".])';
+						regexPrefix = '(?<=[^:][\\s".])';
 						break;
 					case 'js':
-						regexPrefix = '(?<=[^:][ ".])';
+						regexPrefix = '(?<=[^:][\\s".])';
 						break;
 				}
 			}
 
 			this.files[file] = contents.replaceAll(
 				new RegExp(
-					`${regexPrefix}${value}`.replaceAll(
+					`${regexPrefix}${value.replaceAll(
 						/[:\\\/]/g,
 						'[:\\\\\\\/]*',
-					),
+					)}`,
 					'gm',
 				),
 				uglyValue,
@@ -395,7 +403,7 @@ const mappingSorted = Object.entries(mapping)
 		return cummulative;
 	}, {});
 
-if (dryRun) {
+if (dryRun && verbose) {
 	console.log('mapping', mappingSorted);
 } else {
 	writeFileSync(
