@@ -35,7 +35,7 @@ const params = yargs(hideBin(process.argv))
 const dryRun = params.dryRun;
 const path = params.path;
 const sortingAlgorithm = params.algorithm || 'length';
-const canUseUppercase = true;
+let canUseUppercase = true;
 
 class Extractor {
 	_files = [];
