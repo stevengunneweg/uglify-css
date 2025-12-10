@@ -20,11 +20,14 @@
 	"type": "module",
 	"scripts": {
 		"run:angular": "cd tests/angular && npm run start",
-		"test:angular": "cd tests/angular && npm run build && npm run uglify -- -d",
+		"test:angular": "cd tests/angular && npm run build && npm run uglify -- -d -a=length && npm run uglify -- -d -a=count && npm run uglify -- -d -a=countXlength && npm run uglify -- -d",
+		"serve-dist:angular": "cd tests/angular/dist/angular/browser && http-server",
 		"run:html": "cd tests/html && npm run start",
-		"test:html": "cd tests/html && npm run build && npm run uglify -- -d",
+		"test:html": "cd tests/html && npm run build && npm run uglify -- -d -a=length && npm run uglify -- -d -a=count && npm run uglify -- -d -a=countXlength && npm run uglify",
+		"serve-dist:html": "cd tests/html/dist && http-server",
 		"run:vue": "cd tests/vue && npm run start",
-		"test:vue": "cd tests/vue && npm run build && npm run uglify -- -d"
+		"test:vue": "cd tests/vue && npm run build && npm run uglify -- -d -a=length && npm run uglify -- -d -a=count && npm run uglify -- -d -a=countXlength && npm run uglify",
+		"serve-dist:vue": "cd tests/vue/dist && http-server"
 	},
 	"dependencies": {
 		"glob": "13.0.0",

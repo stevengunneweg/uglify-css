@@ -24,23 +24,34 @@ const params = yargs(hideBin(process.argv))
 		default: 'dist',
 		describe: 'Path to the directory to process',
 	})
+	.option('algorithm', {
+		alias: 'a',
+		type: 'string',
+		choices: ['length', 'count', 'countXlength'],
+		describe: 'Algorithm to use for sorting tokens',
+	})
 	.help()
 	.alias('help', 'h').argv;
 const dryRun = params.dryRun;
 const path = params.path;
+const sortingAlgorithm = params.algorithm || 'length';
+const canUseUppercase = true;
 
 class Extractor {
 	_files = [];
 	classNames = [];
 	cssVariables = [];
 
-	constructor() {
+	constructor(files) {
 		this._files = files;
 	}
 
 	extract() {
 		this._files.forEach((file) => {
 			const fileContents = readFileSync(file, 'utf-8');
+			if (!fileContents.match(/<!doctype[^>]*html[^>]*>/i)) {
+				canUseUppercase = false;
+			}
 			let contentsWithoutComments = fileContents.replaceAll(
 				/\/(\*)+.*(?=\*\/)\*\/|\/\/.*$/gm,
 				'',
@@ -56,12 +67,14 @@ class Extractor {
 			}
 
 			// Match only valid CSS class names
-			const matches = contentsWithoutComments.match(
+			const classMatches = contentsWithoutComments.match(
 				/\.(?:[a-zA-Z0-9-_\\\/]|\\:)*-(?:[a-zA-Z0-9-_\\\/]|\\:)+(?=\s|\:|\{)/gm,
 			);
-			if (matches) {
+			if (classMatches) {
 				// Remove the leading . for each class name
-				const cleanMatches = matches.map((match) => match.slice(1));
+				const cleanMatches = classMatches.map((match) =>
+					match.slice(1),
+				);
 				this.classNames.push(...cleanMatches);
 			}
 
@@ -88,7 +101,7 @@ class Uglifier {
 	_uglies = [];
 	_supportedChars = [
 		...'abcdefghijklmnopqrstuvwxyz',
-		...'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+		...(canUseUppercase ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' : ''), // if <!doctype html>
 	];
 	_additionalChars = [...'0123456789'];
 
@@ -169,18 +182,34 @@ class Replacer {
 	/* Replace value with uglified version */
 	parse(value, uglyValue) {
 		Object.entries(this.files).forEach(([file, contents]) => {
+			const fileExtension = file.split('.').pop();
+
 			// Only replace classes and variables, not values
-			let prefix = '';
-			if (file.endsWith('.css') && !value.startsWith('--')) {
-				prefix = '.';
+			let regexPrefix = '';
+			if (!value.startsWith('--')) {
+				switch (fileExtension) {
+					case 'css':
+						regexPrefix = '(?<=[.])';
+						break;
+					case 'html':
+						regexPrefix = '(?<=[^:][ ".])';
+						break;
+					case 'js':
+						regexPrefix = '(?<=[^:][ ".])';
+						break;
+				}
 			}
-			this.files[file] = contents
-				.replaceAll(`${prefix}${value}`, `${prefix}${uglyValue}`)
-				// Also replace non-escaped implementations
-				.replaceAll(
-					`${prefix}${value}`.replaceAll('\\', ''),
-					`${prefix}${uglyValue}`.replaceAll('\\', ''),
-				);
+
+			this.files[file] = contents.replaceAll(
+				new RegExp(
+					`${regexPrefix}${value}`.replaceAll(
+						/[:\\\/]/g,
+						'[:\\\\\\\/]*',
+					),
+					'gm',
+				),
+				uglyValue,
+			);
 		});
 	}
 
@@ -206,7 +235,126 @@ class Replacer {
 	}
 }
 
+class TokenSorter {
+	_files = [];
+	_tokens = [];
+	_algorithm = 'length';
+
+	constructor(files, list, algorithm) {
+		this._files = files;
+		this._tokens = list;
+		this._algorithm = algorithm;
+	}
+
+	getSortedTokens() {
+		const tokensCounted = this._getUsageCount();
+		const tokensSorted = this._sort(tokensCounted);
+		return tokensSorted;
+	}
+
+	_getUsageCount() {
+		const fileContentsPerExtension = this._files.reduce((acc, file) => {
+			const fileExtension = file.split('.').pop();
+			const fileContents = readFileSync(file, 'utf-8');
+			if (!acc[fileExtension]) {
+				acc[fileExtension] = '';
+			}
+			acc[fileExtension] += fileContents;
+			return acc;
+		}, {});
+		return this._tokens.reduce((acc, token) => {
+			Object.entries(fileContentsPerExtension).forEach(
+				([fileExtension, fileContents]) => {
+					let tokenPrefix = '';
+					if (!token.startsWith('--')) {
+						switch (fileExtension) {
+							case 'css':
+								tokenPrefix = '[.]';
+								break;
+							case 'html':
+								tokenPrefix = '[ ".]';
+								break;
+							case 'js':
+								tokenPrefix = '[ "]';
+								break;
+						}
+					}
+					if (!acc[token]) {
+						acc[token] = {};
+					}
+					if (!acc[token][fileExtension]) {
+						acc[token][fileExtension] = 0;
+					}
+					acc[token][fileExtension] +=
+						fileContents
+							.replace(/\\/gm, '')
+							.split(
+								new RegExp(
+									`${tokenPrefix}${token}`.replace(
+										/\\/gm,
+										'',
+									),
+									'gm',
+								),
+							).length - 1;
+				},
+			);
+			return acc;
+		}, {});
+	}
+
+	_sort(tokensCounted) {
+		return Object.entries(tokensCounted)
+			.sort(([tokenA, countsA], [tokenB, countsB]) => {
+				const countA = Object.values(countsA).reduce(
+					(acc, curr) => acc + curr,
+					0,
+				);
+				const countB = Object.values(countsB).reduce(
+					(acc, curr) => acc + curr,
+					0,
+				);
+				let weightA = countA;
+				let weightB = countB;
+				switch (sortingAlgorithm) {
+					case 'length':
+						weightA = tokenA.length;
+						weightB = tokenB.length;
+						break;
+					case 'count':
+						weightA = countA;
+						weightB = countB;
+						break;
+					case 'countXlength':
+						weightA =
+							(tokenA.replace(/^--/, '').length - 1) * countA;
+						weightB =
+							(tokenB.replace(/^--/, '').length - 1) * countB;
+						break;
+					default:
+						break;
+				}
+				if (weightA > weightB) {
+					return -1;
+				} else if (weightA < weightB) {
+					return 1;
+				}
+				if (tokenA.length > tokenB.length) {
+					return -1;
+				} else if (tokenA.length < tokenB.length) {
+					return 1;
+				}
+				return 0;
+			})
+			.reduce((cummulative, [token]) => {
+				cummulative.push(token);
+				return cummulative;
+			}, []);
+	}
+}
+
 const files = globSync(`${path}/**/*.{css,html}`);
+const allFiles = globSync(`${path}/**/*.{css,js,html}`);
 const extractor = new Extractor(files);
 const { classes, variables } = extractor.extract();
 const replacer = new Replacer();
@@ -216,17 +364,13 @@ let mapping = {};
 // @NOTE: Variables need to be handled first
 [variables, classes].forEach((list) => {
 	const uglifier = new Uglifier(list);
-	// @TODO: Detect most used and give it shortest replacement name
-	// In order to do this, we need to count the number of times a class is used throughout the path folder
-	const replaceables = [...list].sort((a, b) => {
-		if (a.length > b.length) {
-			return -1;
-		} else if (a.length < b.length) {
-			return 1;
-		}
-		return 0;
-	});
-	replaceables.forEach((className) => {
+	const tokensSorted = new TokenSorter(
+		allFiles,
+		list,
+		sortingAlgorithm,
+	).getSortedTokens();
+
+	tokensSorted.forEach((className) => {
 		const uglyValue = uglifier.uglifyValue(
 			`${className}`.replace(/^--/g, ''),
 			className.startsWith('--') ? '--' : '',
@@ -261,7 +405,9 @@ if (dryRun) {
 	);
 }
 console.log('Uglified CSS classes and variables');
+let totalOptimised = 0;
 Object.entries(replacer.fileSizes).forEach(([file, sizes]) => {
+	totalOptimised += sizes.old - sizes.new;
 	let color = '';
 	if (sizes.old > sizes.new) {
 		color = colorFgGreen;
@@ -272,6 +418,9 @@ Object.entries(replacer.fileSizes).forEach(([file, sizes]) => {
 		`${colorFgBlue}${file}${colorReset} - ${sizes.old} -> ${sizes.new} ${color}(${sizes.old === sizes.new ? '' : sizes.old > sizes.new ? '-' : '+'}${Math.abs(sizes.optimised)}%)${colorReset}`,
 	);
 });
+console.log(
+	`Total optimised: ${colorFgGreen}${totalOptimised} B${colorReset} using ${sortingAlgorithm}`,
+);
 if (dryRun) {
 	console.log(`Changes have not been applied due to the --dry-run flag.`);
 }
