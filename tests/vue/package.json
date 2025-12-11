@@ -6,8 +6,12 @@
 	"scripts": {
 		"start": "vite",
 		"build": "vite build",
-		"preview": "vite preview",
-		"uglify": "node ../../bin/uglify-css.js"
+		"serve-dist": "cd dist && http-server",
+		"uglify": "node ../../bin/uglify-css.js",
+		"compress": "node ../test-zip.js -d=dist -n=$SUFFIX",
+		"compress:before": "SUFFIX=default npm run compress",
+		"compress:after": "SUFFIX=uglified npm run compress",
+		"test": "npm run build && npm run compress:before && npm run uglify -- -d -a=length && npm run uglify -- -d -a=count && npm run uglify -- -d -a=countXlength && npm run uglify && npm run compress:after && ls -la dist/index.html*.br"
 	},
 	"dependencies": {
 		"vue": "^3.5.13"

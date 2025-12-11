@@ -4,7 +4,12 @@
 	"scripts": {
 		"start": "open ./src/index.html",
 		"build": "rm -rf dist/ && scp -r src/ dist/",
-		"uglify": "node ../../bin/uglify-css.js"
+		"serve-dist": "cd dist && http-server",
+		"uglify": "node ../../bin/uglify-css.js",
+		"compress": "node ../test-zip.js -d=dist -n=$SUFFIX",
+		"compress:before": "SUFFIX=default npm run compress",
+		"compress:after": "SUFFIX=uglified npm run compress",
+		"test": "npm run build && npm run compress:before && npm run uglify -- -d -a=length && npm run uglify -- -d -a=count && npm run uglify -- -d -a=countXlength && npm run uglify && npm run compress:after && ls -la dist/index.html*.br"
 	},
 	"private": true
 }
