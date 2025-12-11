@@ -24,6 +24,12 @@ const params = yargs(hideBin(process.argv))
 		default: false,
 		describe: 'Enable verbose output',
 	})
+	.option('silent', {
+		alias: 's',
+		type: 'boolean',
+		default: false,
+		describe: 'Enable silent mode',
+	})
 	.option('path', {
 		alias: 'p',
 		type: 'string',
@@ -40,6 +46,7 @@ const params = yargs(hideBin(process.argv))
 	.alias('help', 'h').argv;
 const dryRun = params.dryRun;
 const verbose = params.verbose;
+const silent = params.silent;
 const path = params.path;
 const sortingAlgorithm = params.algorithm || 'length';
 let canUseUppercase = true;
@@ -145,9 +152,11 @@ class Uglifier {
 
 		// Check if value is already present in extracted values
 		if (this._blacklist.includes(uglyValue)) {
-			console.log(
-				`Value ${uglyValue} is blacklisted, skipping uglification.`,
-			);
+			if (!silent) {
+				console.log(
+					`Value ${uglyValue} is blacklisted, skipping uglification.`,
+				);
+			}
 			this._uglies.push(uglyValue);
 			return this.uglifyValue(value, prefix);
 		}
@@ -404,7 +413,9 @@ const mappingSorted = Object.entries(mapping)
 	}, {});
 
 if (dryRun && verbose) {
-	console.log('mapping', mappingSorted);
+	if (!silent) {
+		console.log('mapping', mappingSorted);
+	}
 } else {
 	writeFileSync(
 		`${path}/uglify-css.map.json`,
@@ -412,23 +423,25 @@ if (dryRun && verbose) {
 		'utf8',
 	);
 }
-console.log('Uglified CSS classes and variables');
-let totalOptimised = 0;
-Object.entries(replacer.fileSizes).forEach(([file, sizes]) => {
-	totalOptimised += sizes.old - sizes.new;
-	let color = '';
-	if (sizes.old > sizes.new) {
-		color = colorFgGreen;
-	} else if (sizes.old < sizes.new) {
-		color = colorFgRed;
-	}
+if (!silent) {
+	console.log('Uglified CSS classes and variables');
+	let totalOptimised = 0;
+	Object.entries(replacer.fileSizes).forEach(([file, sizes]) => {
+		totalOptimised += sizes.old - sizes.new;
+		let color = '';
+		if (sizes.old > sizes.new) {
+			color = colorFgGreen;
+		} else if (sizes.old < sizes.new) {
+			color = colorFgRed;
+		}
+		console.log(
+			`${colorFgBlue}${file}${colorReset} - ${sizes.old} -> ${sizes.new} ${color}(${sizes.old === sizes.new ? '' : sizes.old > sizes.new ? '-' : '+'}${Math.abs(sizes.optimised)}%)${colorReset}`,
+		);
+	});
 	console.log(
-		`${colorFgBlue}${file}${colorReset} - ${sizes.old} -> ${sizes.new} ${color}(${sizes.old === sizes.new ? '' : sizes.old > sizes.new ? '-' : '+'}${Math.abs(sizes.optimised)}%)${colorReset}`,
+		`Total optimised: ${colorFgGreen}${totalOptimised} B${colorReset} using ${sortingAlgorithm}`,
 	);
-});
-console.log(
-	`Total optimised: ${colorFgGreen}${totalOptimised} B${colorReset} using ${sortingAlgorithm}`,
-);
-if (dryRun) {
-	console.log(`Changes have not been applied due to the --dry-run flag.`);
+	if (dryRun) {
+		console.log(`Changes have not been applied due to the --dry-run flag.`);
+	}
 }
