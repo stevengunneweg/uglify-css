@@ -88,7 +88,7 @@ class Extractor {
 
 			// Match only valid CSS class names
 			const classMatches = contentsWithoutComments.match(
-				/\.(?:[a-zA-Z0-9-_\\\/]|\\:)*-(?:[a-zA-Z0-9-_\\\/]|\\:)+(?=\s|\:|\{)/gm,
+				/\.(?:[a-zA-Z0-9-_\\\/]|\\:)*-(?:[a-zA-Z0-9-_\\\/.]|\\:)+(?=\s|\:|\{)/gm,
 			);
 			if (classMatches) {
 				// Remove the leading . for each class name
