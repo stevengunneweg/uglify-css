@@ -42,6 +42,11 @@ const params = yargs(hideBin(process.argv))
 		choices: ['length', 'count', 'countXlength'],
 		describe: 'Algorithm to use for sorting tokens',
 	})
+	.option('skip-classes', {
+		type: 'boolean',
+		default: false,
+		describe: 'Skip uglifying CSS classes',
+	})
 	.help()
 	.alias('help', 'h').argv;
 const dryRun = params.dryRun;
@@ -212,7 +217,8 @@ class Replacer {
 						regexPrefix = '(?<=[^:][\\s".])';
 						break;
 					case 'js':
-						regexPrefix = '(?<=[^:][\\s".])';
+						regexPrefix =
+							'(?<!var\(--[\-a-zA-Z0-9]*,[\s]?)(?<=[^:][\\s".])';
 						break;
 				}
 			}
@@ -370,6 +376,13 @@ class TokenSorter {
 	}
 }
 
+function log(args) {
+	if (silent) {
+		return;
+	}
+	console.log(args);
+}
+
 const files = globSync(`${path}/**/*.{css,html}`);
 const allFiles = globSync(`${path}/**/*.{css,js,html}`);
 const extractor = new Extractor(files);
@@ -379,7 +392,7 @@ const replacer = new Replacer();
 let mapping = {};
 // Give each type (class/variable) its own uglifier to reuse shortest values
 // @NOTE: Variables need to be handled first
-[variables, classes].forEach((list) => {
+[variables, ...[params.skipClasses ? [] : classes]].forEach((list) => {
 	const uglifier = new Uglifier(list);
 	const tokensSorted = new TokenSorter(
 		allFiles,
@@ -414,7 +427,7 @@ const mappingSorted = Object.entries(mapping)
 
 if (dryRun && verbose) {
 	if (!silent) {
-		console.log('mapping', mappingSorted);
+		log('mapping', mappingSorted);
 	}
 } else {
 	writeFileSync(
@@ -424,24 +437,25 @@ if (dryRun && verbose) {
 	);
 }
 if (!silent) {
-	console.log('Uglified CSS classes and variables');
+	log('Uglified CSS classes and variables');
 	let totalOptimised = 0;
 	Object.entries(replacer.fileSizes).forEach(([file, sizes]) => {
 		totalOptimised += sizes.old - sizes.new;
+		const relativePath = file.split(path)[1];
 		let color = '';
 		if (sizes.old > sizes.new) {
 			color = colorFgGreen;
 		} else if (sizes.old < sizes.new) {
 			color = colorFgRed;
 		}
-		console.log(
-			`${colorFgBlue}${file}${colorReset} - ${sizes.old} -> ${sizes.new} ${color}(${sizes.old === sizes.new ? '' : sizes.old > sizes.new ? '-' : '+'}${Math.abs(sizes.optimised)}%)${colorReset}`,
+		log(
+			`${colorFgBlue}${relativePath}${colorReset} - ${sizes.old} -> ${sizes.new} ${color}(${sizes.old === sizes.new ? '' : sizes.old > sizes.new ? '-' : '+'}${Math.abs(sizes.optimised)}%)${colorReset}`,
 		);
 	});
-	console.log(
+	log(
 		`Total optimised: ${colorFgGreen}${totalOptimised} B${colorReset} using ${sortingAlgorithm}`,
 	);
 	if (dryRun) {
-		console.log(`Changes have not been applied due to the --dry-run flag.`);
+		log(`Changes have not been applied due to the --dry-run flag.`);
 	}
 }

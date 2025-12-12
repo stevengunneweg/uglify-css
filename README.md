@@ -7,7 +7,7 @@ Uglify-CSS is built to do the same but for your CSS.
 ## Install
 
 ```
-npm install uglify-css
+npm install @gunnaway/uglify-css
 ```
 
 ## Implementation
@@ -52,26 +52,8 @@ Only classes/variables containing a dash can be replaced at this time. Since ugl
 
 ## Tests
 
-In the `tests` folder you will find an Angular and a Vue application. The content of these apps are identical. When running uglify-css you can observe the following improvements.
-
-Angular
-
-```
-dist/angular/browser/styles-2OWODMB7.css - 17676 -> 12939 (-26.8%)
-dist/angular/browser/polyfills-FFHMD2TL.js - 34519 -> 34519 (0%)
-dist/angular/browser/main-SCX6R5WO.js - 111296 -> 110281 (-0.91%)
-dist/angular/browser/index.html - 7303 -> 5541 (-24.13%)
-```
-
-Vue
-
-```
-dist/index.html - 456 -> 456 (0%)
-dist/assets/index-DOXljpdd.css - 17669 -> 12885 (-27.08%)
-dist/assets/index-BlAT0E4W.js - 66403 -> 65364 (-1.56%)
-```
-
-You can run these tests yourself by running `npm run test:angular` or `npm run test:vue` from the root of this repository.
+In the `tests` folder you will find an Angular, a Vue and a plain HTML application. The content of these apps are identical.
+You can run tests yourself by running `npm run test` from one of the projects in the tests folder of this repository.
 
 ## Future Improvements
 
@@ -79,7 +61,3 @@ You can run these tests yourself by running `npm run test:angular` or `npm run t
 
 For debugging perposes it would come in handy to have a sourcemap to know what the original name of a class/variable was.
 Currently a `uglify-css.map.json` file is generated with key (old) - value (new) pairs.
-
-### More CLI options
-
-Adding options to disable class uglification for example.
