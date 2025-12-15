@@ -19,7 +19,7 @@
 	},
 	"type": "module",
 	"scripts": {
-		"build": "npm i --package-lock-only && mkdir -p ./dist && cp -r package.json package-lock.json bin README.md LICENSE.md ./dist/"
+		"build": "npm i --package-lock-only && mkdir -p ./dist && cp -r package.json package-lock.json bin src README.md LICENSE.md ./dist/"
 	},
 	"dependencies": {
 		"glob": "13.0.0",
