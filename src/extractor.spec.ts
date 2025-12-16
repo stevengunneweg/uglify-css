@@ -10,7 +10,7 @@ describe('Extractor', () => {
 		extractor = new Extractor({} as any, mockfiles);
 	});
 
-	describe('should extract correct variables', () => {
+	describe('extract', () => {
 		it('should extract correct variables', () => {
 			result = extractor.extract();
 
@@ -32,7 +32,7 @@ describe('Extractor', () => {
 		it('should extract correct classes', () => {
 			result = extractor.extract();
 
-			expect(result.classes.length).toEqual(22);
+			expect(result.classes.length).toEqual(23);
 			[
 				'with-hyphen',
 				'duplicate-class',
@@ -56,6 +56,7 @@ describe('Extractor', () => {
 				'with-exclamation\\\:\\\!and-colon',
 				'with-state-modifier',
 				'with-attr-selector',
+				'with-tailwind-custom-class-\\\[minmax\\\(min-content\\\,1fr\\\)_repeat\\\(1\\\,minmax\\\(0\\\,1fr\\\)\\\)\\\]',
 			].forEach((className) => {
 				expect(result.classes).toContain(className);
 			});

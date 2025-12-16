@@ -79,3 +79,6 @@ no-class {
 .with-attr-selector[data-test^='top'] {
 	height: 100%;
 }
+.with-tailwind-custom-class-\[minmax\(min-content\,1fr\)_repeat\(1\,minmax\(0\,1fr\)\)\] {
+	grid-template-columns: minmax(min-content, 1fr) repeat(1, minmax(0, 1fr));
+}

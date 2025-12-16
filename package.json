@@ -2,7 +2,7 @@
 	"name": "@gunnaway/uglify-css",
 	"description": "A tool to uglify CSS files by renaming variables and classes",
 	"author": "Steven Gunneweg",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"keywords": [
 		"CSS",
 		"uglify",

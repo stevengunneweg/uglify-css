@@ -61,8 +61,8 @@ export class TokenSorter {
 								.split(
 									new RegExp(
 										`${tokenPrefix}${token}`.replace(
-											/\\/gm,
-											'',
+											/\\\\/gm,
+											'\\',
 										),
 										'gm',
 									),
