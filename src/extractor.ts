@@ -38,12 +38,12 @@ export class Extractor {
 
 			// Match only valid CSS class names
 			// - Starts after a dot
-			// - Followed by at least one escaped characters or non-[whitespace/colon/bracked/comma/parentheses] characters
+			// - Followed by at least one escaped characters or non-[whitespace/colon/bracket/curly-bracket/comma/parentheses] characters
 			// - At least one hyphen
-			// - Followed by at least one escaped characters or non-[whitespace/colon/bracked/comma/parentheses] characters
+			// - Followed by at least one escaped characters or non-[whitespace/colon/bracket/curly-bracket/comma/parentheses] characters
 			// - End before whitespace, colon, bracket, comma, or parentheses
 			const classMatches = contentsWithoutComments.match(
-				/(?<=\.)(?:\\.|[^\s:\{,).])+-(?:\\.|[^\s:\{,).])+(?=[\s:\{,).])/gm,
+				/(?<=\.)(?:\\.|[^\s:\[\{,).])+-(?:\\.|[^\s:\[\{,).])+(?=[\s:\[\{,).])/gm,
 			);
 			if (classMatches) {
 				this.classNames.push(...classMatches);

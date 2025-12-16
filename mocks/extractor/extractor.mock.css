@@ -76,3 +76,6 @@ no-class {
 .with-state-modifier:first-child {
 	height: 100%;
 }
+.with-attr-selector[data-test^='top'] {
+	height: 100%;
+}

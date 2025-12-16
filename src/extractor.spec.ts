@@ -32,7 +32,7 @@ describe('Extractor', () => {
 		it('should extract correct classes', () => {
 			result = extractor.extract();
 
-			expect(result.classes.length).toEqual(21);
+			expect(result.classes.length).toEqual(22);
 			[
 				'with-hyphen',
 				'duplicate-class',
@@ -55,6 +55,7 @@ describe('Extractor', () => {
 				'\\\!with-exclamation',
 				'with-exclamation\\\:\\\!and-colon',
 				'with-state-modifier',
+				'with-attr-selector',
 			].forEach((className) => {
 				expect(result.classes).toContain(className);
 			});
