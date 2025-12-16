@@ -61,12 +61,3 @@ You can run tests yourself by running `npm run test` from one of the projects in
 
 For debugging perposes it would come in handy to have a sourcemap to know what the original name of a class/variable was.
 Currently a `uglify-css.map.json` file is generated with key (old) - value (new) pairs.
-
-### Unit tests
-
-Some crude tests have been written but these should be converted to use Jest or Vitest.
-
-### Typescript
-
-For better maintainability Typescript would be a big improvement.
-With this change the build script in package.json would also make more sense.

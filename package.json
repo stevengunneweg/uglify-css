@@ -2,7 +2,7 @@
 	"name": "@gunnaway/uglify-css",
 	"description": "A tool to uglify CSS files by renaming variables and classes",
 	"author": "Steven Gunneweg",
-	"version": "0.0.7",
+	"version": "0.1.0",
 	"keywords": [
 		"CSS",
 		"uglify",
@@ -19,14 +19,20 @@
 	},
 	"type": "module",
 	"scripts": {
-		"build": "npm i --package-lock-only && mkdir -p ./dist && cp -r package.json package-lock.json bin src README.md LICENSE.md ./dist/"
+		"build": "npm i --package-lock-only && mkdir -p ./dist && cp -r package.json package-lock.json README.md LICENSE.md ./dist/ && npm run build-vite",
+		"build-vite": "npx vite build && chmod +x dist/bin/uglify-css.js",
+		"test": "npx vitest run"
 	},
 	"dependencies": {
 		"glob": "13.0.0",
 		"yargs": "18.0.0"
 	},
 	"devDependencies": {
+		"@types/node": "25.0.2",
+		"@types/yargs": "17.0.35",
 		"prettier": "3.7.3",
-		"prettier-plugin-tailwindcss": "0.7.1"
+		"prettier-plugin-tailwindcss": "0.7.1",
+		"typescript": "5.9.3",
+		"vitest": "4.0.15"
 	}
 }

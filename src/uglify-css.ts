@@ -3,12 +3,12 @@ import { globSync } from 'glob';
 import { writeFileSync } from 'node:fs';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { Context } from '../src/context.js';
-import { Extractor } from '../src/extractor.js';
-import { Logger } from '../src/logger.js';
-import { Replacer } from '../src/replacer.js';
-import { TokenSorter } from '../src/token-sorter.js';
-import { Uglifier } from '../src/uglifier.js';
+import { Algorithm, Context } from './context';
+import { Extractor } from './extractor';
+import { Logger } from './logger';
+import { Replacer } from './replacer';
+import { TokenSorter } from './token-sorter';
+import { Uglifier } from './uglifier';
 
 const params = yargs(hideBin(process.argv))
 	.scriptName('uglify-css')
@@ -49,16 +49,17 @@ const params = yargs(hideBin(process.argv))
 		describe: 'Skip uglifying CSS classes',
 	})
 	.help()
-	.alias('help', 'h').argv;
+	.alias('help', 'h')
+	.parseSync();
 
-const context = new Context(
-	params.dryRun,
-	params.verbose,
-	params.silent,
-	params.path,
-	params.algorithm,
-	params.skipClasses,
-);
+const context = new Context({
+	dryRun: params.dryRun,
+	verbose: params.verbose,
+	silent: params.silent,
+	path: params.path,
+	algorithm: params.algorithm as Algorithm,
+	skipClasses: params.skipClasses,
+});
 const logger = new Logger(context);
 
 const files = globSync(`${context.path}/**/*.{css,html}`);
@@ -67,7 +68,7 @@ const extractor = new Extractor(context, files);
 const { classes, variables } = extractor.extract();
 const replacer = new Replacer(context);
 
-let mapping = {};
+let mapping: Record<string, string> = {};
 // Give each type (class/variable) its own uglifier to reuse shortest values
 // @NOTE: Variables need to be handled first
 [variables, ...[context.skipClasses ? [] : classes]].forEach((list) => {
@@ -76,7 +77,6 @@ let mapping = {};
 		context,
 		allFiles,
 		list,
-		context.algorithm,
 	).getSortedTokens();
 
 	tokensSorted.forEach((className) => {
@@ -99,7 +99,7 @@ const mappingSorted = Object.entries(mapping)
 		}
 		return 0;
 	})
-	.reduce((cummulative, [key, value]) => {
+	.reduce<Record<string, string>>((cummulative, [key, value]) => {
 		cummulative[key] = value;
 		return cummulative;
 	}, {});

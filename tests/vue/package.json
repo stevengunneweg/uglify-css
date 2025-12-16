@@ -7,7 +7,7 @@
 		"start": "vite",
 		"build": "vite build",
 		"serve-dist": "cd dist && http-server",
-		"uglify": "node ../../bin/uglify-css.js",
+		"uglify": "node ../../dist/bin/uglify-css.js",
 		"compress": "node ../test-zip.js -d=dist -n=$SUFFIX",
 		"compress:before": "SUFFIX=default npm run compress",
 		"compress:after": "SUFFIX=uglified npm run compress",

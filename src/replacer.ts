@@ -1,31 +1,38 @@
 import { globSync } from 'glob';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { ContextOptions } from './context';
 
 export class Replacer {
-	context;
-	filesPaths = [];
-	files = {};
-	fileSizes = {};
+	context: ContextOptions;
+	files: { [key: string]: string } = {};
+	fileSizes: {
+		[key: string]: { old: number; new: number; optimised: number };
+	} = {};
 
-	constructor(context) {
+	constructor(context: ContextOptions) {
 		this.context = context;
 
-		this.filesPaths = globSync(`${this.context.path}/**/*.{css,js,html}`);
-		this.files = {};
+		const filesPaths = globSync(`${this.context.path}/**/*.{css,js,html}`);
+		const files: { [key: string]: string } = {};
 
-		this.filesPaths.forEach((file) => {
+		filesPaths.forEach((file) => {
 			const fileContents = readFileSync(file, 'utf-8');
-			if (!this.files[file]) {
-				this.files[file] = fileContents;
+			if (!files[file]) {
+				files[file] = fileContents;
 			}
 			if (!this.fileSizes[file]) {
-				this.fileSizes[file] = { old: fileContents.length };
+				this.fileSizes[file] = {
+					old: fileContents.length,
+					new: fileContents.length,
+					optimised: 0,
+				};
 			}
 		});
+		this.files = files;
 	}
 
 	/* Replace value with uglified version */
-	parse(value, uglyValue) {
+	parse(value: string, uglyValue: string) {
 		Object.entries(this.files).forEach(([file, contents]) => {
 			const fileExtension = file.split('.').pop();
 

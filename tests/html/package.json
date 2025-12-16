@@ -5,7 +5,7 @@
 		"start": "open ./src/index.html",
 		"build": "rm -rf dist/ && scp -r src/ dist/",
 		"serve-dist": "cd dist && http-server",
-		"uglify": "node ../../bin/uglify-css.js",
+		"uglify": "node ../../dist/bin/uglify-css.js",
 		"compress": "node ../test-zip.js -d=dist -n=$SUFFIX",
 		"compress:before": "SUFFIX=default npm run compress",
 		"compress:after": "SUFFIX=uglified npm run compress",

@@ -1,12 +1,14 @@
-export class Uglifier {
-	context;
-	_blacklist = [];
-	_mapping = {};
-	_uglies = [];
-	_supportedChars = [...'abcdefghijklmnopqrstuvwxyz'];
-	_additionalChars = [...'0123456789-'];
+import { ContextOptions } from './context';
 
-	constructor(context, blacklist = []) {
+export class Uglifier {
+	context: ContextOptions;
+	_blacklist: string[] = [];
+	_mapping: Record<string, string> = {};
+	_uglies: string[] = [];
+	_supportedChars: string[] = [...'abcdefghijklmnopqrstuvwxyz'];
+	_additionalChars: string[] = [...'0123456789-'];
+
+	constructor(context: ContextOptions, blacklist: string[] = []) {
 		this.context = context;
 
 		this._supportedChars = [
@@ -19,7 +21,7 @@ export class Uglifier {
 		this._uglies = [...this._blacklist];
 	}
 
-	uglifyValue(value, prefix = '') {
+	uglifyValue(value: string, prefix: string = ''): string {
 		const mapKey = `${prefix}${value}`;
 		if (this._mapping[mapKey]) {
 			return this._mapping[mapKey];
@@ -31,17 +33,19 @@ export class Uglifier {
 			...this._additionalChars,
 		];
 
-		let n = this._uglies.length;
+		let index = this._uglies.length;
 		let result = '';
-		result = defaultCharset[n % defaultCharset.length];
-		n = Math.floor((n - defaultCharset.length) / defaultCharset.length);
+		result = defaultCharset[index % defaultCharset.length];
+		index = Math.floor(
+			(index - defaultCharset.length) / defaultCharset.length,
+		);
 
 		while (
-			n > 0 ||
+			index > 0 ||
 			(result.length <= 1 && this._uglies.length >= defaultCharset.length)
 		) {
-			result += extendedCharset[n % extendedCharset.length];
-			n = Math.floor(n / extendedCharset.length);
+			result += extendedCharset[index % extendedCharset.length];
+			index = Math.floor(index / extendedCharset.length);
 		}
 		let uglyValue = `${prefix}${result}`;
 

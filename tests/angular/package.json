@@ -5,7 +5,7 @@
 		"start": "ng serve",
 		"build": "ng build",
 		"serve-dist": "cd dist/angular/browser && http-server",
-		"uglify": "node ../../bin/uglify-css.js",
+		"uglify": "node ../../dist/bin/uglify-css.js",
 		"compress": "node ../test-zip.js -d=dist/angular/browser -n=$SUFFIX",
 		"compress:before": "SUFFIX=default npm run compress",
 		"compress:after": "SUFFIX=uglified npm run compress",

@@ -1,19 +1,22 @@
 import { readFileSync } from 'node:fs';
+import { ContextOptions } from './context';
 
 export class Extractor {
-	context;
-	_files = [];
-	classNames = [];
-	cssVariables = [];
+	private context: ContextOptions;
+	private files: string[] = [];
+	private classNames: string[] = [];
+	private cssVariables: string[] = [];
 
-	constructor(context, files) {
+	constructor(context: ContextOptions, files: string[]) {
 		this.context = context;
-
-		this._files = files;
+		this.files = files;
 	}
 
-	extract() {
-		this._files.forEach((file) => {
+	extract(): {
+		classes: string[];
+		variables: string[];
+	} {
+		this.files.forEach((file) => {
 			const fileContents = readFileSync(file, 'utf-8');
 			let contentsWithoutComments = fileContents.replaceAll(
 				/\/(\*)+.*(?=\*\/)\*\/|\/\/.*$/gm,
@@ -58,8 +61,10 @@ export class Extractor {
 				this.cssVariables.push(...variableMatches);
 			}
 		});
+		// Remove duplicates
 		const uniqeClassNames = [...new Set(this.classNames)];
 		const uniqeVariableNames = [...new Set(this.cssVariables)];
+
 		return {
 			classes: uniqeClassNames,
 			variables: uniqeVariableNames,
