@@ -1,0 +1,84 @@
+:root {
+	--simple: 100%;
+	--with-dash: 50px;
+	--with-numbers-100: 50px;
+	--with-substring-and-more: 50px;
+	--with-substring: 60px;
+	--with-cityblock--modifier: 60px;
+	--modifier: 60px;
+}
+
+no-class {
+	color: red;
+}
+.nohyphen {
+	color: red;
+}
+.with-hyphen {
+	background: blue;
+}
+.duplicate-class.with-hyphen {
+	background: blue;
+}
+.with-under_score {
+	background: blue;
+}
+.withnumbers-12 {
+	background: blue;
+}
+.slash-text\/class {
+	margin: 10px;
+}
+.slash-number\/50 {
+	margin: 10px;
+}
+.colon-text\:class {
+	margin: 10px;
+}
+.colon-number\:50 {
+	margin: 10px;
+}
+.with-cityblock--modifier {
+	margin: 10px;
+}
+.multiple-selectors-1,
+.multiple-selectors-2 {
+	margin: 10px;
+}
+:where(.inside-selector > :not(:last-child)) {
+	margin-bottom: 1rem;
+}
+.very-oddly\:and-complex:is(:where(.group-inside):hover *) {
+	transform: scale(1.05);
+}
+@supports (color: color-mix(in lab, red, red)) {
+	.inside-supports {
+		color: red;
+	}
+}
+@media (hover: hover) {
+	.should-ignore\:state:hover {
+		background-color: var(--color-amber-300);
+	}
+}
+.with-brackets-\[inline\] > * {
+	height: 100%;
+}
+.\[\&\>\*\]\:with-brackets-before > * {
+	height: 100%;
+}
+.\!with-exclamation {
+	height: 100%;
+}
+.with-exclamation\:\!and-colon {
+	height: 100%;
+}
+.with-state-modifier:first-child {
+	height: 100%;
+}
+.with-attr-selector[data-test^='top'] {
+	height: 100%;
+}
+.with-tailwind-custom-class-\[minmax\(min-content\,1fr\)_repeat\(1\,minmax\(0\,1fr\)\)\] {
+	grid-template-columns: minmax(min-content, 1fr) repeat(1, minmax(0, 1fr));
+}
