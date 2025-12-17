@@ -56,17 +56,18 @@ export class TokenSorter {
 							acc[token][fileExtension] = 0;
 						}
 						acc[token][fileExtension] +=
-							fileContents
-								.replace(/\\/gm, '')
-								.split(
-									new RegExp(
-										`${tokenPrefix}${token}`.replace(
-											/\\\\/gm,
-											'\\',
-										),
-										'gm',
-									),
-								).length - 1;
+							fileContents.replace(/\\/gm, '').split(
+								new RegExp(
+									`${tokenPrefix}${token
+										.replace(/(\\)+/gm, '\\') // singlify duplicate escapes
+										.replace(
+											/[^\\]([\[\]\{\}\(\)])/gm,
+											'\\$1',
+										)}` // escape non-escaped brackets/braces/parentheses
+										.replace(/\\([^\[\]\{\}\(\)])/gm, '$1'), // do not escape other characters
+									'gm',
+								),
+							).length - 1;
 					},
 				);
 				return acc;
