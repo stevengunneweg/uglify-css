@@ -1,12 +1,13 @@
 import { ContextOptions } from './context';
 
 export class Uglifier {
-	context: ContextOptions;
-	_blacklist: string[] = [];
-	_mapping: Record<string, string> = {};
-	_uglies: string[] = [];
-	_supportedChars: string[] = [...'abcdefghijklmnopqrstuvwxyz'];
-	_additionalChars: string[] = [...'0123456789-'];
+	private context: ContextOptions;
+	private _blacklist: string[] = [];
+	private _mapping: Record<string, string> = {};
+	private _uglies: string[] = [];
+	private _supportedChars: string[] = [...'abcdefghijklmnopqrstuvwxyz'];
+	private _additionalChars: string[] = [...'0123456789-'];
+	private index = 0;
 
 	constructor(context: ContextOptions, blacklist: string[] = []) {
 		this.context = context;
@@ -15,7 +16,7 @@ export class Uglifier {
 			...'abcdefghijklmnopqrstuvwxyz',
 			...(this.context.canUseUppercase
 				? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-				: ''), // if <!doctype html>
+				: ''), // if <!doctype html> is missing
 		];
 		this._blacklist = blacklist;
 		this._uglies = [...this._blacklist];
@@ -27,29 +28,15 @@ export class Uglifier {
 			return this._mapping[mapKey];
 		}
 
-		const defaultCharset = this._supportedChars;
-		const extendedCharset = [
-			...this._supportedChars,
-			...this._additionalChars,
-		];
-
-		let index = this._uglies.length;
-		let result = '';
-		result = defaultCharset[index % defaultCharset.length];
-		index = Math.floor(
-			(index - defaultCharset.length) / defaultCharset.length,
-		);
-
-		while (
-			index > 0 ||
-			(result.length <= 1 && this._uglies.length >= defaultCharset.length)
-		) {
-			result += extendedCharset[index % extendedCharset.length];
-			index = Math.floor(index / extendedCharset.length);
-		}
+		const result = this.indexToString(this.index);
 		let uglyValue = `${prefix}${result}`;
+		this.index++;
 
-		// Check if value is already present in extracted values
+		// Check if generated value is already in use
+		if (this._uglies.includes(uglyValue)) {
+			return this.uglifyValue(value, prefix);
+		}
+		// Check if value is blacklisted
 		if (this._blacklist.includes(uglyValue)) {
 			if (!this.context.silent) {
 				console.log(
@@ -58,8 +45,7 @@ export class Uglifier {
 			}
 			return this.uglifyValue(value, prefix);
 		}
-
-		// If ugly value does not provide improvement, use the original value
+		// Check if change provides improvement
 		if (
 			uglyValue.length >= mapKey.length &&
 			!this._uglies.includes(mapKey)
@@ -67,14 +53,48 @@ export class Uglifier {
 			uglyValue = mapKey;
 		}
 
-		// Prevent duplicate ugly values
-		if (this._uglies.includes(uglyValue)) {
-			uglyValue = `${uglyValue}-${Math.floor(Math.random() * 1000)}`;
-		}
-
 		this._uglies.push(uglyValue);
 		this._mapping[mapKey] = uglyValue;
 
 		return uglyValue;
+	}
+
+	private indexToString(
+		index: number,
+		defaultCharSet: string[] = this._supportedChars,
+		extendedCharSet: string[] = [
+			...this._supportedChars,
+			...this._additionalChars,
+		],
+	): string {
+		const base = extendedCharSet.length;
+		const firstBase = defaultCharSet.length;
+
+		let length = 1;
+		let count = firstBase;
+
+		// Determine how many characters the result needs
+		while (index >= count) {
+			index -= count;
+			length++;
+			count = firstBase * Math.pow(base, length - 1);
+		}
+
+		let result = '';
+
+		// First character (restricted subset)
+		const firstIndex = Math.floor(index / Math.pow(base, length - 1));
+		result += defaultCharSet[firstIndex];
+
+		// Remaining characters (full list)
+		let remainder = index % Math.pow(base, length - 1);
+
+		for (let pos = length - 2; pos >= 0; pos--) {
+			const idx = Math.floor(remainder / Math.pow(base, pos));
+			result += extendedCharSet[idx];
+			remainder %= Math.pow(base, pos);
+		}
+
+		return result;
 	}
 }

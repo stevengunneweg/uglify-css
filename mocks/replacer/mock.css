@@ -1,0 +1,18 @@
+.p-1 {
+	margin: 2px;
+}
+.escaped-class\:m-1 {
+	justify-content: center;
+}
+.tailwind-class-\[#value\] {
+	color: #ff0000;
+}
+.\[\&\>\*\]\:text-left {
+	text-align: left;
+}
+.with-state:hover {
+	text-align: left;
+}
+.no-match {
+	display: hidden;
+}

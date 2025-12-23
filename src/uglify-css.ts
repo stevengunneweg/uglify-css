@@ -63,7 +63,7 @@ const context = new Context({
 const logger = new Logger(context);
 
 const files = globSync(`${context.path}/**/*.{css,html}`);
-const allFiles = globSync(`${context.path}/**/*.{css,js,html}`);
+const allFiles = globSync(`${context.path}/**/*.{css,js,mjs,html}`);
 const extractor = new Extractor(context, files);
 const { classes, variables } = extractor.extract();
 const replacer = new Replacer(context);
@@ -86,7 +86,7 @@ let mapping: Record<string, string> = {};
 		);
 		replacer.parse(className, uglyValue);
 	});
-	mapping = { ...mapping, ...uglifier._mapping };
+	mapping = { ...mapping, ...uglifier['_mapping'] };
 });
 replacer.replaceFiles(context.dryRun);
 
@@ -106,7 +106,7 @@ const mappingSorted = Object.entries(mapping)
 
 if (context.dryRun && context.verbose) {
 	logger.log('mapping', mappingSorted);
-} else {
+} else if (!context.dryRun) {
 	writeFileSync(
 		`${context.path}/uglify-css.map.json`,
 		JSON.stringify(mappingSorted, null, '\t'),

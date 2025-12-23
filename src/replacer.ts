@@ -1,6 +1,7 @@
 import { globSync } from 'glob';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { ContextOptions } from './context';
+import { getTokenRegex } from './helpers/token-regex';
 
 export class Replacer {
 	context: ContextOptions;
@@ -12,14 +13,18 @@ export class Replacer {
 	constructor(context: ContextOptions) {
 		this.context = context;
 
-		const filesPaths = globSync(`${this.context.path}/**/*.{css,js,html}`);
+		const filesPaths = globSync(
+			`${this.context.path}/**/*.{css,js,mjs,html}`,
+		);
 		const files: { [key: string]: string } = {};
 
 		filesPaths.forEach((file) => {
 			const fileContents = readFileSync(file, 'utf-8');
+			// istanbul ignore else -- @preserve
 			if (!files[file]) {
 				files[file] = fileContents;
 			}
+			// istanbul ignore else -- @preserve
 			if (!this.fileSizes[file]) {
 				this.fileSizes[file] = {
 					old: fileContents.length,
@@ -34,32 +39,9 @@ export class Replacer {
 	/* Replace value with uglified version */
 	parse(value: string, uglyValue: string) {
 		Object.entries(this.files).forEach(([file, contents]) => {
-			const fileExtension = file.split('.').pop();
-
-			// Only replace classes and variables, not values
-			let regexPrefix = '';
-			if (!value.startsWith('--')) {
-				switch (fileExtension) {
-					case 'css':
-						regexPrefix = '(?<=\\.)';
-						break;
-					case 'html':
-						regexPrefix = '(?<=[^:][\\s".])';
-						break;
-					case 'js':
-						regexPrefix =
-							'(?<!var\\(--[\\-a-zA-Z0-9]*,[\\s]?)(?<=[^:]|[\\s"\'`.])';
-						break;
-				}
-			}
+			const fileExtension = file.split('.').pop() as string;
 			this.files[file] = contents.replaceAll(
-				new RegExp(
-					`${regexPrefix}${value.replaceAll(
-						/[:\\\/]/g,
-						'[:\\\\\\\/]*',
-					)}`,
-					'gm',
-				),
+				getTokenRegex(value, fileExtension),
 				uglyValue,
 			);
 		});
@@ -74,8 +56,8 @@ export class Replacer {
 					(100 -
 						(100 / this.fileSizes[file].old) *
 							this.fileSizes[file].new) *
-						100,
-				) / 100;
+						1000,
+				) / 1000;
 			this.fileSizes[file].optimised = optimisePercentage;
 		});
 

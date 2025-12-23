@@ -21,6 +21,7 @@
 	"scripts": {
 		"build": "npm i --package-lock-only && mkdir -p ./dist && cp -r package.json package-lock.json README.md LICENSE.md ./dist/ && npm run build-vite",
 		"build-vite": "npx vite build && chmod +x dist/bin/uglify-css.js",
+		"deploy": "cd dist && npm publish",
 		"test": "npx vitest run"
 	},
 	"dependencies": {
@@ -30,6 +31,7 @@
 	"devDependencies": {
 		"@types/node": "25.0.2",
 		"@types/yargs": "17.0.35",
+		"@vitest/coverage-v8": "4.0.15",
 		"prettier": "3.7.3",
 		"prettier-plugin-tailwindcss": "0.7.1",
 		"typescript": "5.9.3",

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { ContextOptions } from './context';
+import { getTokenRegex } from './helpers/token-regex';
 
 export class TokenSorter {
 	private context: ContextOptions;
@@ -23,7 +24,7 @@ export class TokenSorter {
 		const fileContentsPerExtension = this.files.reduce<
 			Record<string, string>
 		>((acc, file) => {
-			const fileExtension: string = file.split('.').pop() || '';
+			const fileExtension: string = file.split('.').pop() as string;
 			const fileContents = readFileSync(file, 'utf-8');
 			if (!acc[fileExtension]) {
 				acc[fileExtension] = '';
@@ -35,38 +36,16 @@ export class TokenSorter {
 			(acc, token) => {
 				Object.entries(fileContentsPerExtension).forEach(
 					([fileExtension, fileContents]) => {
-						let tokenPrefix = '';
-						if (!token.startsWith('--')) {
-							switch (fileExtension) {
-								case 'css':
-									tokenPrefix = '[.]';
-									break;
-								case 'html':
-									tokenPrefix = '[ ".]';
-									break;
-								case 'js':
-									tokenPrefix = '[ "]';
-									break;
-							}
-						}
 						if (!acc[token]) {
 							acc[token] = {};
 						}
+						// istanbul ignore else -- @preserve
 						if (!acc[token][fileExtension]) {
 							acc[token][fileExtension] = 0;
 						}
 						acc[token][fileExtension] +=
-							fileContents.replace(/\\/gm, '').split(
-								new RegExp(
-									`${tokenPrefix}${token
-										.replace(/(\\)+/gm, '\\') // singlify duplicate escapes
-										.replace(
-											/[^\\]([\[\]\{\}\(\)])/gm,
-											'\\$1',
-										)}` // escape non-escaped brackets/braces/parentheses
-										.replace(/\\([^\[\]\{\}\(\)])/gm, '$1'), // do not escape other characters
-									'gm',
-								),
+							fileContents.split(
+								getTokenRegex(token, fileExtension),
 							).length - 1;
 					},
 				);
@@ -80,15 +59,15 @@ export class TokenSorter {
 		return Object.entries(tokensCounted)
 			.sort(([tokenA, countsA], [tokenB, countsB]) => {
 				const countA = Object.values(countsA).reduce(
-					(acc, curr) => acc + curr,
+					(total, amount) => total + amount,
 					0,
 				);
 				const countB = Object.values(countsB).reduce(
-					(acc, curr) => acc + curr,
+					(total, amount) => total + amount,
 					0,
 				);
-				let weightA = countA;
-				let weightB = countB;
+				let weightA = tokenA.length;
+				let weightB = tokenB.length;
 				switch (this.context.algorithm) {
 					case 'length':
 						weightA = tokenA.length;
