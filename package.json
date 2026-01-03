@@ -2,7 +2,7 @@
 	"name": "@gunnaway/uglify-css",
 	"description": "A tool to uglify CSS files by renaming variables and classes",
 	"author": "Steven Gunneweg",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"keywords": [
 		"CSS",
 		"uglify",
@@ -22,7 +22,7 @@
 		"build": "npm i --package-lock-only && mkdir -p ./dist && cp -r package.json package-lock.json README.md LICENSE.md ./dist/ && npm run build-vite",
 		"build-vite": "npx vite build && chmod +x dist/bin/uglify-css.js",
 		"deploy": "cd dist && npm publish",
-		"test": "npx vitest run"
+		"test": "npx vitest run --coverage"
 	},
 	"dependencies": {
 		"glob": "13.0.0",
